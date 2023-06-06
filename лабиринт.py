@@ -23,8 +23,9 @@ class Menu(turtle.Turtle):
         self.write("                              Правила игры:"
                     '\n' "      1. Используйте стрелки для перемещения игрока по лабиринту."
                     '\n' "      2. Соберите все сокровища, избегая столкновения с врагами."
-                    '\n' "3. Как только все сокровища в лабиринте будут собраны, врата к выходу будут открыты.", align="center",
-                   font=("Courier", 12, "normal"))
+                    '\n' "3. Как только все сокровища в лабиринте будут собраны, врата к выходу будут открыты."
+                    '\n'  "                          4. Доберитесь до выхода.",
+                   align="center", font=("Courier", 12, "normal"))
 
     def wait_for_input(self):
         while True:
@@ -179,7 +180,7 @@ class Player(turtle.Turtle):
     def show_message(self):
         turtle.goto(0, 0)
         turtle.color("white")
-        turtle.write("Поздравляем! Вы собрали все сокровища!"
+        turtle.write("Поздравляем! Вы собрали все сокровища, врата к выходу открыты!"
                      '\n' "Нажмите Enter, чтобы продолжить.", align="center",
                      font=("Courier", 25, "normal"))
         keyboard.wait('enter')
