@@ -3,8 +3,8 @@ import math
 import random
 import keyboard
 import pyautogui
+import winsound
 
-# Получаем размеры экрана
 screen_width, screen_height = pyautogui.size()
 
 class Menu(turtle.Turtle):
@@ -20,16 +20,17 @@ class Menu(turtle.Turtle):
         self.write("Нажмите 'P', чтобы начать игру", align="center", font=("Courier", 24, "normal"))
         self.color("white")
         self.goto(0, 250)
-        self.write("                            Правила игры:"
+        self.write("                              Правила игры:"
                     '\n' "      1. Используйте стрелки для перемещения игрока по лабиринту."
                     '\n' "      2. Соберите все сокровища, избегая столкновения с врагами."
-                    '\n' "3. Цель игры - найти выход из лабиринта с максимальным количеством сокровищ.", align="center",
+                    '\n' "3. Как только все сокровища в лабиринте будут собраны, врата к выходу будут открыты.", align="center",
                    font=("Courier", 12, "normal"))
 
-
     def wait_for_input(self):
-        keyboard.wait("p")  # ждем нажатия клавиши "p"
-        self.clear() # очищаем экран
+        while True:
+            if keyboard.is_pressed("p"):
+                self.clear()
+                break
 
 def exit_game():
     wn.bye()
@@ -38,27 +39,43 @@ def wn_create():
     global wn
     wn = turtle.Screen()
     screen_width, screen_height = pyautogui.size()
-    wn.setup(screen_width, screen_height)
-    wn.screensize(canvwidth=screen_width, canvheight=screen_height)
+    wn.setup(screen_width, screen_height, startx=0, starty=0)
 
-def block_caps_lock():
+music_playing = False
+
+def pause_music():
+    global music_playing
+    if music_playing:
+        winsound.PlaySound(None, winsound.SND_PURGE)
+        music_playing = False
+
+def play_music():
+    global music_playing
+    if not music_playing:
+        winsound.PlaySound("music.wav", winsound.SND_ASYNC)
+        music_playing = True
+
+def block_key():
     keyboard.block_key('caps lock')
+    keyboard.block_key('shift')
 
 def menu_start():
     global menu, images, image
+    wn_create()
     wn.bgpic("wp.gif")
     wn.bgcolor("DimGray")
     wn.title("Labirint")
     wn.tracer(0, 0)
     wn.update()
     menu = Menu(0, 0)
-    turtle.onkey(exit_game, "q")
-    menu.wait_for_input()  # ждем нажатия клавиши "p"
+    menu.wait_for_input()
     turtle.listen()
-    block_caps_lock()  # блокировка кнопки CAPS LOCK
+    turtle.onkey(pause_music, "o")
+    play_music()
+    block_key()
 
-    images = ["pers.gif", "pers.gif",
-            "sun.gif", "dd.gif", "vrag.gif", "vrag.gif", "exit.gif"]
+    images = ["pers.gif", "pers2.gif", "gates.gif",
+            "sun.gif", "pen.gif", "vrag.gif", "vrag.gif", "exit.gif"]
     for image in images:
         turtle.register_shape(image)
 
@@ -70,7 +87,22 @@ class Pen(turtle.Turtle):
         self.penup()
         self.speed(0)
 
+class Gates(turtle.Turtle):
+    def __init__(self):
+        turtle.Turtle.__init__(self)
+        self.shape("gates.gif")
+        self.color("white")
+        self.penup()
+        self.speed(0)
+
+    def destroy(self):
+        self.goto(2000, 2000)
+        self.hideturtle()
+        self.clear()
+        gates.remove(self)
+
 class Player(turtle.Turtle):
+    global gates
     def __init__(self):
         turtle.Turtle.__init__(self)
         self.shape("pers.gif")
@@ -83,14 +115,14 @@ class Player(turtle.Turtle):
         move_to_x = player.xcor()
         move_to_y = player.ycor() + 24
 
-        if (move_to_x, move_to_y) not in walls:
+        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_down(self):
         move_to_x = player.xcor()
         move_to_y = player.ycor() - 24
 
-        if (move_to_x, move_to_y) not in walls:
+        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_left(self):
@@ -99,17 +131,23 @@ class Player(turtle.Turtle):
 
         self.shape("pers.gif")
 
-        if (move_to_x, move_to_y) not in walls:
+        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_right(self):
         move_to_x = player.xcor() + 24
         move_to_y = player.ycor()
 
-        self.shape("pers.gif")
+        self.shape("pers2.gif")
 
-        if (move_to_x, move_to_y) not in walls:
+        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
+
+    def check_collision_with_gates(self, x, y):
+        for gate in gates:
+            if gate.distance(x, y) < 5:
+                return True
+        return False
 
     def is_collision(self, other):
         a = self.xcor() - other.xcor()
@@ -120,6 +158,32 @@ class Player(turtle.Turtle):
             return True
         else:
             return False
+
+    def show_collision_message(self):
+        turtle.goto(0, 0)
+        turtle.color("red")
+        turtle.write("       Вы были пойманы врагом!"
+                     '\n' "Нажмите 'ENTER' чтобы открыть главное меню", align="center",
+                     font=("Courier", 25, "normal"))
+        keyboard.wait('enter')
+        restart_game()
+        turtle.done()
+
+    def check_treasures(self):
+        if len(treasures) == 0:
+            for gate in gates:
+                gate.destroy()
+            gates.clear()
+        return len(treasures) == 0
+
+    def show_message(self):
+        turtle.goto(0, 0)
+        turtle.color("white")
+        turtle.write("Поздравляем! Вы собрали все сокровища!"
+                     '\n' "Нажмите Enter, чтобы продолжить.", align="center",
+                     font=("Courier", 25, "normal"))
+        keyboard.wait('enter')
+        turtle.clear()
 
 class Treasure(turtle.Turtle):
     def __init__(self, x, y):
@@ -222,56 +286,58 @@ class Enemy(turtle.Turtle):
         self.hideturtle()
 
 def objects_init():
-    global levels, treasures, enemies, exits
+    global levels, treasures, enemies, exits, gates
     levels = [""]
 
     level_1 = [
     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "XXXXXXXXXXXX                  XX                           T    XXXX  XX",
+    "XXXXXXXXXXXX                  XX                E               XXXX  XX",
     "XX         X           XXX    XX    XXXXX    XXXXXXXX     XXXXXX      XX",
-    "XX    P           XXXXXXXX T       XXXXXX    XXXXX                  XXXX",
+    "XX    P           XXXXXXXX         XXXXXX  T XXXXX                  XXXX",
     "XX         X            XXXXXXXXXXX    XXXXXXXXXXXXXXXXXXXXXXXXX      XX",
     "XXXXXXXXXXXX                                   XXX              E    XXX",
-    "XX      XXXXX   XXXXXXXXXXXXXXXXXX    XXXXXXX  XXX   XXXXXXXXXX      XXX",
+    "XX  T   XXXXX   XXXXXXXXXXXXXXXXXX    XXXXXXX  XXX   XXXXXXXXXX      XXX",
     "XXXXX   XXXX              XXXXXXXX    XXXXXXX  XXX          XXXXX    XXX",
-    "XX         XXXXXXXXXXXX   XX          XXXXXX    XXXXXXXX    XXXXXX    XX",
-    "XXX    XXXXXXXXXX                  E          T       XX    XXXXXXXXXXXX",
-    "XXX     T     XXXXXXXX    XXXX  XXXXXXXXXXXXX   XXXX                  XX",
+    "XX         XXXXXXXXXXXX   XX          XXXXXX    XXXXXXXX    XXXXXX T  XX",
+    "XXX    XXXXXXXXXX                    E                XX    XXXXXXXXXXXX",
+    "XXX           XXXXXXXX    XXXX  XXXXXXXXXXXXX   XXXX           E      XX",
     "XXX    XXXXXXXXXX         XXXX   T XXXXXXXXX       X  XX  XXXXXXXXX   XX",
     "XXX    XXXXXXXXXXXXXXX    XXXX  XXXXXXX         X  X  XX  X  XXXXXX   XX",
-    "XXX    XXXXXXX       X    XXXX  XXX            XX  X  XXXXX           XX",
-    "XXX       E              XXXXX  XXXXXX        XXX  X  XXXXX  XXX  XXXXXX",
-    "XXXXXXXXXXXXXX       XX  XXXXX  XXXXXXXXX    XXX   X  XXXXX       E   XX",
-    "XXXXXX      XXXXXX   XX                E        T  X  XXX    XXXXXX T XX",
+    "XXX    XXXXXXX   T   X    XXXX  XXX            XX  X  XXXXX           XX",
+    "XXX                      XXXXX  XXXXXX        XXX  X  XXXXX  XXX  XXXXXX",
+    "XXXXXXXXXXXXXX       XX  XXXXX  XXXXXXXXX    XXX   X  XXXXX           XX",
+    "XXXXXX      XXXXXX   XX              E             X  XXX T  XXXXXX   XX",
     "XX   XXXXX    XXX   XXX  XXX  XXX   XXXXXXXXXXXX   X  XXXXXXXXX       XX",
-    "XX   XXXXX  XXXXXX   XX  XXX  XXX   XXXXX          X  XXX   XXX   XXXXXX",
-    "XX             T     XX  XXX        XXXXXXXXXXX    X  XXX         XXXXXX",
+    "XX   XXXXX  XXXXXX   XX  XXX  XXX     XXX          X  XXX   XXX   XXXXXX",
+    "XX      E            XX  XXX          XXXXXXXXX    X  XXX         XXXXXX",
     "XX            XXXX       XXXXXXXX    XXXXXXXX         XXX   XX        XX",
     "XXXXX   XXXX  XXXXXXXXXXXXXXXXXXXXX    XXXXXXX  XXXXXXXXX   XXXXXXXXXXXX",
     "XXXXX   XXXX              XXX  XXXXX    XXXXX   XXXX              XXXXXX",
     "XXXXX   XXXX  XXXX   XXX  XXX  XX        E         XXXXXX   XXX   XX  XX",
-    "X              XXX   XXX  XXX  XXXXXXXXXXXXXX        XXXX   XXX   XX  XX",
-    "X   XXXXXXXXX  XXXX               T              XX  XXXX   XXX     T XX",
+    "X       T      XXX   XXX  XXX  XXXXXXXXXXXXXX        XXXX   XXX   XX  XX",
+    "X   XXXXXXXXX  XXXX             E  T             XX  XXXX   XXX     T XX",
     "X       XXXXX  XXXXXXXXX  XXX   XXXXXXXX   XXX  XXX  XXXX   XXXXXXXXXXXX",
     "X   XXXXXXXXX  XXXXXXXXX   XXXXXXXXXXX     XXX  XXX                  XXX",
-    "X         E            T    XXX                 XXXXXXXXXXXXXXX  E   XXX",
-    "XXXXXX   XXXXX   XXX   XXXXXXXXXXXXX   XX     XXXX          XXX      XXX",
+    "X         E                 XXX                 XXXXXXXXXXXXXXX  E   XXX",
+    "XXXXXX   XXXXX   XXX   XXXXXXXXXXXXX   XX     XXXX    T     XXX  T   XXX",
     "XX       XXXX   XXXXXXXXXXXX   XXXXXXXXXX           XXXX    XXXXXXXXXXXX",
-    "XXXXX                   T             XXX    XXXXXXXXXXX    X         XX",
-    "XXT XX   XXXXXXXXXX  XXXXXXXXXXXXXXXXXXX                         R    XX",
+    "XXXXX                                 XXX    XXXXXXXXXXX    X         XX",
+    "XX  XX   XXXXXXXXXX  XXXXXXXXXXXXXXXXXXX                    G    R    XX",
     "XX  XX   XXXXXXX                 XXXXXX                     X         XX",
-    "XX                    XXXXXXX       E        XXXX T         XXXXXXXXXXXX",
+    "XX  T                 XXXXXXX T     E        XXXX           XXXXXXXXXXXX",
     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     ]
     treasures = []
     enemies = []
     exits = []
+    gates = []
+
     levels.append(level_1)
 
 def restart_game():
     for enemy in enemies:
         enemy.active = False
-    wn.clear()  # очистка экрана
+    wn.clear()
     wn.clearscreen()
     wn.update()
     menu_start()
@@ -281,24 +347,36 @@ def restart_game():
 
 def game_completed_message():
     turtle.goto(0, 0)
-    turtle.color("red")
-    turtle.write("Игра окончена! Нажмите 'R' чтобы открыть главное меню", align="center", font=("Courier", 25, "normal"))
-    keyboard.wait('r')
+    turtle.color("white")
+    turtle.write("Поздравляем, вы нашли выход из лабиринта  и остались живы!"
+                 '\n' "         Нажмите 'ENTER' чтобы открыть главное меню", align="center",
+                 font=("Courier", 25, "normal"))
+    keyboard.wait('enter')
     restart_game()
     turtle.done()
 
 def setup_maze(level):
+    global gates
     for y in range(len(level)):
         for x in range(len(level[y])):
             character = level[y][x]
             screen_x = -850 + (x * 24)
-            screen_y = 450 - (y * 24)
+            screen_y = 440 - (y * 24)
 
-            if character =="X":
+            if character == "X":
                 pen.goto(screen_x, screen_y)
-                pen.shape("dd.gif")
+                pen.shape("pen.gif")
                 pen.stamp()
                 walls.append((screen_x, screen_y))
+
+            if character == "G":
+                pen.goto(screen_x, screen_y)
+                pen.shape("gates.gif")
+                new_gate = Gates()
+                new_gate.goto(screen_x, screen_y)
+                gates.append(new_gate)
+
+
 
             if character == "P":
                 player.goto(screen_x, screen_y)
@@ -336,44 +414,59 @@ def game_process():
     gold_text.hideturtle()
     gold_text.penup()
     gold_text.color("gold")
-    gold_text.goto(-865, 465)
-    gold_text.write("Золото: 0", font=("Comic Sans", 20, "normal"))
+    gold_text.goto(-865, 455)
+    gold_text.write("Сокровище: 0", font=("Comic Sans", 20, "normal"))
 
-    tt_text = turtle.Turtle()
-    tt_text.hideturtle()
-    tt_text.penup()
-    tt_text.color("white")
-    tt_text.goto(465, 465)
-    tt_text.write("Нажмите 'Q' чтобы завершить игру", font=("Comic Sans", 15, "normal"))
+    exit_text = turtle.Turtle()
+    exit_text.hideturtle()
+    exit_text.penup()
+    exit_text.color("white")
+    exit_text.goto(465, -444)
+    exit_text.write("Нажмите 'Q' чтобы завершить игру", font=("Comic Sans", 15, "normal"))
+
+    music_text = turtle.Turtle()
+    music_text.hideturtle()
+    music_text.penup()
+    music_text.color("white")
+    music_text.goto(-865, -444)
+    music_text.write("Нажмите 'O' чтобы выключить звук", font=("Comic Sans", 15, "normal"))
 
 def process():
-    game_over = False  # Флаг для определения состояния игры
-    while game_over == False:  # Цикл продолжается, пока флаг game_over равен False
+    game_over = False
+    while game_over == False:
         for treasure in treasures:
             if player.is_collision(treasure):
                 player.gold += treasure.gold
+                gold_text.clear()
+                gold_text.write("Сокровище: {}".format(player.gold), font=("Comic Sans", 20, "normal"))
                 treasure.destroy()
                 treasures.remove(treasure)
 
+                if player.check_treasures():
+                    player.show_message()
+                    for exit_obj in exits:
+                        exit_obj.color("green")
+                        turtle.onkey(exit_game, "q")
+
         for enemy in enemies:
             if player.is_collision(enemy):
-                game_over = True  # Установка флага game_over в True
+                player.show_collision_message()
+                game_over = True
 
         for exit in exits:
             if player.is_collision(exit):
-                game_over = True  # Установка флага game_over в True
+                game_over = True
 
         gold_text.clear()
-        gold_text.write("Золото: {}".format(player.gold), font=("Comic Sans", 20, "normal"))
+        gold_text.write("Сокровище: {}".format(player.gold), font=("Comic Sans", 20, "normal"))
 
         if game_over == True:
             break
 
+        turtle.onkeypress(exit_game, "q")
+
         wn.update()
     game_completed_message()
-
-
-
 
 wn_create()
 menu_start()
