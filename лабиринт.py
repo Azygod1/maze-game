@@ -1,9 +1,4 @@
-import turtle
-import math
-import random
-import keyboard
-import pyautogui
-import winsound
+import turtle, math, random, keyboard, pyautogui, winsound, sys
 
 screen_width, screen_height = pyautogui.size()
 
@@ -36,6 +31,10 @@ class Menu(turtle.Turtle):
 def exit_game():
     wn.bye()
 
+def check_quit():
+    if keyboard.is_pressed("q"):
+        sys.exit()
+
 def wn_create():
     global wn
     wn = turtle.Screen()
@@ -57,7 +56,6 @@ def play_music():
         music_playing = True
 
 def block_key():
-    keyboard.block_key('caps lock')
     keyboard.block_key('shift')
 
 def menu_start():
@@ -75,8 +73,8 @@ def menu_start():
     play_music()
     block_key()
 
-    images = ["pers.gif", "pers2.gif", "gates.gif",
-            "sun.gif", "pen.gif", "vrag.gif", "vrag.gif", "exit.gif"]
+    images = ["gates.gif", "Shakhter.gif", "Shakhter2.gif",
+            "sun.gif", "pen.gif", "vrag1.gif", "exit.gif"]
     for image in images:
         turtle.register_shape(image)
 
@@ -106,7 +104,7 @@ class Player(turtle.Turtle):
     global gates
     def __init__(self):
         turtle.Turtle.__init__(self)
-        self.shape("pers.gif")
+        self.shape("Shakhter.gif")
         self.color("red")
         self.penup()
         self.speed(0)
@@ -116,32 +114,36 @@ class Player(turtle.Turtle):
         move_to_x = player.xcor()
         move_to_y = player.ycor() + 24
 
-        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
+        if (move_to_x, move_to_y) not in walls and not \
+                self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_down(self):
         move_to_x = player.xcor()
         move_to_y = player.ycor() - 24
 
-        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
+        if (move_to_x, move_to_y) not in walls and not \
+                self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_left(self):
         move_to_x = player.xcor() - 24
         move_to_y = player.ycor()
 
-        self.shape("pers.gif")
+        self.shape("Shakhter2.gif")
 
-        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
+        if (move_to_x, move_to_y) not in walls and not \
+                self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def go_right(self):
         move_to_x = player.xcor() + 24
         move_to_y = player.ycor()
 
-        self.shape("pers2.gif")
+        self.shape("Shakhter.gif")
 
-        if (move_to_x, move_to_y) not in walls and not self.check_collision_with_gates(move_to_x, move_to_y):
+        if (move_to_x, move_to_y) not in walls and not \
+                self.check_collision_with_gates(move_to_x, move_to_y):
             self.goto(move_to_x, move_to_y)
 
     def check_collision_with_gates(self, x, y):
@@ -181,7 +183,7 @@ class Player(turtle.Turtle):
         turtle.goto(0, 0)
         turtle.color("white")
         turtle.write("Поздравляем! Вы собрали все сокровища, врата к выходу открыты!"
-                     '\n' "Нажмите Enter, чтобы продолжить.", align="center",
+                     '\n'          "Нажмите Enter, чтобы продолжить.", align="center",
                      font=("Courier", 25, "normal"))
         keyboard.wait('enter')
         turtle.clear()
@@ -222,7 +224,7 @@ class Exit(turtle.Turtle):
 class Enemy(turtle.Turtle):
     def __init__(self, x, y):
         turtle.Turtle.__init__(self)
-        self.shape("vrag.gif")
+        self.shape("vrag1.gif")
         self.color("red")
         self.penup()
         self.speed(0)
@@ -243,11 +245,11 @@ class Enemy(turtle.Turtle):
         elif self.direction == "left":
             dx = -24
             dy = 0
-            self.shape("vrag.gif")
+            self.shape("vrag1.gif")
         elif self.direction == "right":
             dx = 24
             dy = 0
-            self.shape("vrag.gif")
+            self.shape("vrag1.gif")
         else:
             dx = 0
             dy = 0
@@ -300,13 +302,13 @@ def objects_init():
     "XX  T   XXXXX   XXXXXXXXXXXXXXXXXX    XXXXXXX  XXX   XXXXXXXXXX      XXX",
     "XXXXX   XXXX              XXXXXXXX    XXXXXXX  XXX          XXXXX    XXX",
     "XX         XXXXXXXXXXXX   XX          XXXXXX    XXXXXXXX    XXXXXX T  XX",
-    "XXX    XXXXXXXXXX                    E                XX    XXXXXXXXXXXX",
-    "XXX           XXXXXXXX    XXXX  XXXXXXXXXXXXX   XXXX           E      XX",
+    "XXX    XX  XXXXXX                    E                XX    XXXXXXXXXXXX",
+    "XXX           XXXXXXXX    XXXX  XXXXXXXXXXXXX   XXXX                  XX",
     "XXX    XXXXXXXXXX         XXXX   T XXXXXXXXX       X  XX  XXXXXXXXX   XX",
     "XXX    XXXXXXXXXXXXXXX    XXXX  XXXXXXX         X  X  XX  X  XXXXXX   XX",
     "XXX    XXXXXXX   T   X    XXXX  XXX            XX  X  XXXXX           XX",
     "XXX                      XXXXX  XXXXXX        XXX  X  XXXXX  XXX  XXXXXX",
-    "XXXXXXXXXXXXXX       XX  XXXXX  XXXXXXXXX    XXX   X  XXXXX           XX",
+    "XXXXXXXXXXXXXX       XX  XXXXX  XXXXXXXXX    XXX   X  XXX             XX",
     "XXXXXX      XXXXXX   XX              E             X  XXX T  XXXXXX   XX",
     "XX   XXXXX    XXX   XXX  XXX  XXX   XXXXXXXXXXXX   X  XXXXXXXXX       XX",
     "XX   XXXXX  XXXXXX   XX  XXX  XXX     XXX          X  XXX   XXX   XXXXXX",
@@ -349,7 +351,7 @@ def restart_game():
 def game_completed_message():
     turtle.goto(0, 0)
     turtle.color("white")
-    turtle.write("Поздравляем, вы нашли выход из лабиринта  и остались живы!"
+    turtle.write("Поздравляем, вы нашли выход из лабиринта и остались живы!"
                  '\n' "         Нажмите 'ENTER' чтобы открыть главное меню", align="center",
                  font=("Courier", 25, "normal"))
     keyboard.wait('enter')
@@ -464,8 +466,8 @@ def process():
         if game_over == True:
             break
 
-        turtle.onkeypress(exit_game, "q")
 
+        check_quit()
         wn.update()
     game_completed_message()
 
