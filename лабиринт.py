@@ -7,29 +7,34 @@ class Menu(turtle.Turtle):
         turtle.Turtle.__init__(self)
         self.penup()
         self.hideturtle()
-        self.goto(x, y)
-        self.write("ЛАБИРИНТ", align="center", font=("Courier", 105, "normal"))
+        self.goto(x, -80)
+        self.write("ЛАБИРИНТ", align="center", font=("Times New Roman", 105, "normal"))
         self.color("Gray")
-        self.goto(x, y - 250)
+        self.goto(x, y - 290)
         self.color("white")
-        self.write("Нажмите 'P', чтобы начать игру", align="center", font=("Courier", 24, "normal"))
+        self.write("   Нажмите 'P', чтобы начать игру"
+                   '\n'
+                   '\n' "Нажмите 'Q', чтобы завершить игру", align="center", font=("Times New Roman", 24, "normal"))
         self.color("white")
-        self.goto(0, 250)
-        self.write("                              Правила игры:"
+        self.goto(70, 250)
+        self.write("                                                         Правила игры:"
                     '\n' "      1. Используйте стрелки для перемещения игрока по лабиринту."
-                    '\n' "      2. Соберите все сокровища, избегая столкновения с врагами."
+                    '\n' "        2. Соберите все сокровища, избегая столкновения с врагами."
                     '\n' "3. Как только все сокровища в лабиринте будут собраны, врата к выходу будут открыты."
-                    '\n'  "                          4. Доберитесь до выхода.",
-                   align="center", font=("Courier", 12, "normal"))
+                    '\n'  "                                                4. Доберитесь до выхода.",
+                   align="center", font=("Times New Roman", 15, "normal"))
 
     def wait_for_input(self):
         while True:
             if keyboard.is_pressed("p"):
                 self.clear()
                 break
+            if keyboard.is_pressed("q"):
+                sys.exit()
 
 def exit_game():
-    wn.bye()
+    if wn is not None:
+        wn.bye()
 
 def check_quit():
     if keyboard.is_pressed("q"):
@@ -43,12 +48,23 @@ def wn_create():
 
 music_playing = False
 
+def toggle_music():
+    global music_playing
+    if music_playing:
+        winsound.PlaySound(None, winsound.SND_PURGE)
+        music_playing = False
+    else:
+        winsound.PlaySound("music.wav", winsound.SND_ASYNC)
+        music_playing = True
+
+# остановить музыку
 def pause_music():
     global music_playing
     if music_playing:
         winsound.PlaySound(None, winsound.SND_PURGE)
         music_playing = False
 
+# воспроизвести музыку
 def play_music():
     global music_playing
     if not music_playing:
@@ -56,7 +72,7 @@ def play_music():
         music_playing = True
 
 def block_key():
-    keyboard.block_key('shift')
+    keyboard.block_key('alt')
 
 def menu_start():
     global menu, images, image
@@ -69,7 +85,7 @@ def menu_start():
     menu = Menu(0, 0)
     menu.wait_for_input()
     turtle.listen()
-    turtle.onkey(pause_music, "o")
+    turtle.onkey(toggle_music, "o")
     play_music()
     block_key()
 
@@ -78,14 +94,15 @@ def menu_start():
     for image in images:
         turtle.register_shape(image)
 
+# создание стен лабиринта
 class Pen(turtle.Turtle):
     def __init__(self):
         turtle.Turtle.__init__(self)
         self.shape("square")
-        self.color("white")
         self.penup()
         self.speed(0)
 
+# создание врат
 class Gates(turtle.Turtle):
     def __init__(self):
         turtle.Turtle.__init__(self)
@@ -100,6 +117,7 @@ class Gates(turtle.Turtle):
         self.clear()
         gates.remove(self)
 
+# создание персонажа
 class Player(turtle.Turtle):
     global gates
     def __init__(self):
@@ -165,9 +183,9 @@ class Player(turtle.Turtle):
     def show_collision_message(self):
         turtle.goto(0, 0)
         turtle.color("red")
-        turtle.write("       Вы были пойманы врагом!"
+        turtle.write("                Вы были пойманы врагом!"
                      '\n' "Нажмите 'ENTER' чтобы открыть главное меню", align="center",
-                     font=("Courier", 25, "normal"))
+                     font=("Times New Roman", 25, "normal"))
         keyboard.wait('enter')
         restart_game()
         turtle.done()
@@ -183,11 +201,13 @@ class Player(turtle.Turtle):
         turtle.goto(0, 0)
         turtle.color("white")
         turtle.write("Поздравляем! Вы собрали все сокровища, врата к выходу открыты!"
-                     '\n'          "Нажмите Enter, чтобы продолжить.", align="center",
-                     font=("Courier", 25, "normal"))
+                     '\n'"                  Нажмите Enter, чтобы продолжить.", align="center",
+                     font=("Times New Roman", 25, "normal"))
+        turtle.hideturtle()
         keyboard.wait('enter')
         turtle.clear()
 
+# создание сокровищ
 class Treasure(turtle.Turtle):
     def __init__(self, x, y):
         turtle.Turtle.__init__(self)
@@ -202,6 +222,7 @@ class Treasure(turtle.Turtle):
         self.goto(2000, 2000)
         self.hideturtle()
 
+# создание выхода из лабиринта
 class Exit(turtle.Turtle):
     def __init__(self, x, y):
         turtle.Turtle.__init__(self)
@@ -221,6 +242,7 @@ class Exit(turtle.Turtle):
         else:
             return False
 
+# создание врагов
 class Enemy(turtle.Turtle):
     def __init__(self, x, y):
         turtle.Turtle.__init__(self)
@@ -228,7 +250,7 @@ class Enemy(turtle.Turtle):
         self.color("red")
         self.penup()
         self.speed(0)
-        self.gold = 25
+        self.gold = 0
         self.goto(x, y)
         self.direction = random.choice(["up", "down", "left", "right"])
         self.active = True
@@ -284,10 +306,7 @@ class Enemy(turtle.Turtle):
         else:
             return False
 
-    def destroy(self):
-        self.goto(2000, 2000)
-        self.hideturtle()
-
+# создание лабиринта
 def objects_init():
     global levels, treasures, enemies, exits, gates
     levels = [""]
@@ -337,6 +356,7 @@ def objects_init():
 
     levels.append(level_1)
 
+# рестарт игры
 def restart_game():
     for enemy in enemies:
         enemy.active = False
@@ -348,16 +368,17 @@ def restart_game():
     game_process()
     process()
 
+# сообщение о нахождении выхода из лабиринта
 def game_completed_message():
     turtle.goto(0, 0)
     turtle.color("white")
     turtle.write("Поздравляем, вы нашли выход из лабиринта и остались живы!"
                  '\n' "         Нажмите 'ENTER' чтобы открыть главное меню", align="center",
-                 font=("Courier", 25, "normal"))
+                 font=("Times New Roman", 25, "normal"))
     keyboard.wait('enter')
     restart_game()
     turtle.done()
-
+# элементы лабиринта
 def setup_maze(level):
     global gates
     for y in range(len(level)):
@@ -378,8 +399,6 @@ def setup_maze(level):
                 new_gate = Gates()
                 new_gate.goto(screen_x, screen_y)
                 gates.append(new_gate)
-
-
 
             if character == "P":
                 player.goto(screen_x, screen_y)
@@ -418,22 +437,25 @@ def game_process():
     gold_text.penup()
     gold_text.color("gold")
     gold_text.goto(-865, 455)
-    gold_text.write("Сокровище: 0", font=("Comic Sans", 20, "normal"))
+    gold_text.write("Сокровище: 0", font=("Times New Roman", 20, "normal"))
 
+    # вывод сообщения о завершении игры
     exit_text = turtle.Turtle()
     exit_text.hideturtle()
     exit_text.penup()
     exit_text.color("white")
-    exit_text.goto(465, -444)
-    exit_text.write("Нажмите 'Q' чтобы завершить игру", font=("Comic Sans", 15, "normal"))
+    exit_text.goto(500, -444)
+    exit_text.write("Нажмите 'Q' чтобы завершить игру", font=("Times New Roman", 15, "normal"))
 
+    # вывод сообщения о выключении звука
     music_text = turtle.Turtle()
     music_text.hideturtle()
     music_text.penup()
     music_text.color("white")
     music_text.goto(-865, -444)
-    music_text.write("Нажмите 'O' чтобы выключить звук", font=("Comic Sans", 15, "normal"))
+    music_text.write("Нажмите 'O' чтобы выключить звук", font=("Times New Roman", 15, "normal"))
 
+# процесс игры
 def process():
     game_over = False
     while game_over == False:
@@ -441,15 +463,12 @@ def process():
             if player.is_collision(treasure):
                 player.gold += treasure.gold
                 gold_text.clear()
-                gold_text.write("Сокровище: {}".format(player.gold), font=("Comic Sans", 20, "normal"))
+                gold_text.write("Сокровище: {}".format(player.gold), font=("Times New Roman", 20, "normal"))
                 treasure.destroy()
                 treasures.remove(treasure)
 
                 if player.check_treasures():
                     player.show_message()
-                    for exit_obj in exits:
-                        exit_obj.color("green")
-                        turtle.onkey(exit_game, "q")
 
         for enemy in enemies:
             if player.is_collision(enemy):
@@ -460,12 +479,8 @@ def process():
             if player.is_collision(exit):
                 game_over = True
 
-        gold_text.clear()
-        gold_text.write("Сокровище: {}".format(player.gold), font=("Comic Sans", 20, "normal"))
-
         if game_over == True:
             break
-
 
         check_quit()
         wn.update()
