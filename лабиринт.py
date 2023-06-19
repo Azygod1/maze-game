@@ -44,7 +44,7 @@ def wn_create():
     global wn
     wn = turtle.Screen()
     screen_width, screen_height = pyautogui.size()
-    wn.setup(screen_width, screen_height, startx=0, starty=0)
+    wn.setup(screen_width + -19, screen_height + 0, startx=-1, starty=-1)
 
 music_playing = False
 
